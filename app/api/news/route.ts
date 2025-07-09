@@ -16,10 +16,8 @@ export async function GET() {
   const res = await fetch(url);
   const data = await res.json();
 
-  // Filter out duplicate titles
-  const uniqueArticles = Array.from(
-    new Map(data.articles.map((item: Article) => [item.title, item])).values()
-Codespaces: Reload Window
+  const articleMap = new Map(data.articles.map((item: Article) => [item.title, item]));
+  const uniqueArticles = Array.from(articleMap.values());
 
   return NextResponse.json({ articles: uniqueArticles.slice(0, 12) });
 }
