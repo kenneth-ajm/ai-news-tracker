@@ -1,131 +1,126 @@
+/// <reference types="react" />
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
+import {
+  FaRobot,
+  FaBuilding,
+  FaMoneyBillWave,
+  FaFlask,
+  FaBalanceScale,
+  FaNewspaper,
+} from 'react-icons/fa';
+import {
+  FaYahoo,
+  FaGoogle,
+  FaMicrosoft,
+  FaAmazon,
+  FaApple,
+  FaTwitter,
+  FaFacebook,
+  FaGithub,
+  FaRegNewspaper,
+} from 'react-icons/fa6';
 
 type Article = {
   title: string;
   description: string;
   url: string;
-  image: string;
+  image?: string;
   publishedAt: string;
   source: { name: string };
 };
 
-const filters = ['All', 'People', 'Funding', 'Product'];
-
-const HIGHLIGHTS: Record<string, string> = {
-  "Sam Altman": "🧑‍💼 Sam Altman",
-  "Dario Amodei": "🧑‍🔬 Dario Amodei",
-  "Demis Hassabis": "🧠 Demis Hassabis",
-  "Elon Musk": "🚀 Elon Musk",
-  "OpenAI": "🏢 OpenAI",
-  "Anthropic": "🌿 Anthropic",
-  "DeepMind": "🔬 DeepMind",
-  "Meta": "📘 Meta",
-  "Google": "🔍 Google",
-  "xAI": "🧩 xAI"
+const SOURCE_ICONS: Record<string, ReactNode> = {
+  Yahoo: <FaYahoo className="inline-block text-purple-400" />,
+  Google: <FaGoogle className="inline-block text-blue-400" />,
+  Microsoft: <FaMicrosoft className="inline-block text-blue-600" />,
+  Amazon: <FaAmazon className="inline-block text-yellow-500" />,
+  Apple: <FaApple className="inline-block text-gray-400" />,
+  Twitter: <FaTwitter className="inline-block text-blue-400" />,
+  Facebook: <FaFacebook className="inline-block text-blue-500" />,
+  Github: <FaGithub className="inline-block text-white" />,
 };
 
-function highlightTerms(text: string): React.ReactNode {
-  const parts = text.split(
-    new RegExp(`(${Object.keys(HIGHLIGHTS).join('|')})`, 'gi')
-  );
 
-  return (
-    <>
-      {parts.map((part, i) =>
-        HIGHLIGHTS[part] ? (
-          <span key={i} className="font-bold text-indigo-600">
-            {HIGHLIGHTS[part]}
-          </span>
-        ) : (
-          part
-        )
-      )}
-    </>
-  );
+const CATEGORY_KEYWORDS: Record<string, string[]> = {
+  'Latest AI product announcements': ['launch', 'product', 'release', 'introduce'],
+  'Key company movements': ['CEO', 'leadership', 'hiring', 'resign', 'promotion', 'executive', 'sam altman', 'elon musk'],
+  'AI funding rounds and acquisitions': ['funding', 'raised', 'acquired', 'acquisition', 'invest'],
+  'Notable papers or research breakthroughs': ['research', 'breakthrough', 'paper', 'study'],
+  'Regulatory or ethical updates': ['regulation', 'ban', 'ethics', 'law', 'policy'],
+};
+
+function categorizeArticle(article: Article): string {
+  const text = `${article.title} ${article.description}`.toLowerCase();
+  for (const [category, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
+    if (keywords.some((word) => text.includes(word))) {
+      return category;
+    }
+  }
+  return 'Uncategorized';
 }
 
-export default function Home() {
+export default function HomePage() {
   const [articles, setArticles] = useState<Article[]>([]);
-  const [filtered, setFiltered] = useState<Article[]>([]);
-  const [selected, setSelected] = useState('All');
+  const [visibleCount, setVisibleCount] = useState(12);
 
   useEffect(() => {
     fetch('/api/news')
       .then((res) => res.json())
-      .then((data) => {
-        setArticles(data.articles);
-        setFiltered(data.articles);
-      });
+      .then((data) => setArticles(data.articles || []));
   }, []);
 
-  useEffect(() => {
-    if (selected === 'All') {
-      setFiltered(articles);
-    } else {
-      const keywordMap: Record<string, string[]> = {
-        People: ['joins', 'hires', 'steps down', 'chief', 'exec', 'leadership', 'sam altman', 'dario', 'demis', 'elon'],
-        Funding: ['raises', 'funding', 'investment', 'valuation', 'series a', 'seed round'],
-        Product: ['launch', 'introduces', 'releases', 'model', 'GPT', 'tool', 'framework'],
-      };
+  const categorized: Record<string, Article[]> = {};
+  articles.forEach((article) => {
+    const category = categorizeArticle(article);
+    if (!categorized[category]) categorized[category] = [];
+    categorized[category].push(article);
+  });
 
-      const terms = keywordMap[selected] || [];
-      const filteredList = articles.filter(
-        (a) =>
-          terms.some((term) =>
-            (a.title + ' ' + a.description).toLowerCase().includes(term)
-          )
-      );
-      setFiltered(filteredList);
-    }
-  }, [selected, articles]);
+  const handleLoadMore = () => {
+    setVisibleCount((prev) => prev + 12);
+  };
 
   return (
-    <main className="p-8 max-w-5xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">🧠 Latest AI News</h1>
+    <main className="min-h-screen bg-gradient-to-br from-slate-900 to-gray-800 text-white px-6 py-10 font-sans">
+      <h1 className="text-4xl font-extrabold mb-8 flex items-center gap-2">
+        🤖 Latest AI News
+      </h1>
 
-      {/* Filter Buttons */}
-      <div className="flex gap-4 mb-6">
-        {filters.map((f) => (
+      {Object.entries(categorized).map(([category, items]) => (
+        <div key={category} className="mb-10">
+          <h2 className="text-2xl font-bold mb-4">{category}</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {items.slice(0, visibleCount).map((article) => (
+              <div
+                key={article.url}
+                className="bg-white/10 backdrop-blur-md rounded-lg p-5 shadow-md border border-white/10 hover:bg-white/20 transition"
+              >
+                <a href={article.url} target="_blank" rel="noopener noreferrer">
+                  <h3 className="text-lg font-semibold mb-1">{article.title}</h3>
+                </a>
+                <p className="text-sm text-gray-300 mb-2">
+                  {(SOURCE_ICONS[article.source.name] || <FaRegNewspaper className="inline-block" />)}{' '}
+                  {article.source.name} — {new Date(article.publishedAt).toLocaleString()}
+                </p>
+                <p className="text-sm text-gray-400">{article.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      {visibleCount < articles.length && (
+        <div className="flex justify-center mt-10">
           <button
-            key={f}
-            onClick={() => setSelected(f)}
-            className={`px-3 py-1 rounded border ${
-              selected === f ? 'bg-black text-white' : 'bg-white text-black'
-            }`}
+            onClick={handleLoadMore}
+            className="px-6 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition"
           >
-            {f}
+            Load More
           </button>
-        ))}
-      </div>
-
-      {/* News Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {filtered.length === 0 && (
-          <p className="text-gray-500">No articles found for “{selected}”.</p>
-        )}
-        {filtered.map((article, index) => (
-          <a
-            key={index}
-            href={article.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="border p-4 rounded shadow hover:bg-gray-50 transition"
-          >
-            <h2 className="text-xl font-semibold">
-              {highlightTerms(article.title)}
-            </h2>
-            <p className="text-sm text-gray-600">
-              {article.source.name} –{' '}
-              {new Date(article.publishedAt).toLocaleString()}
-            </p>
-            <p className="mt-2 text-gray-800">
-              {highlightTerms(article.description)}
-            </p>
-          </a>
-        ))}
-      </div>
+        </div>
+      )}
     </main>
   );
 }
