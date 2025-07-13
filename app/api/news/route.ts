@@ -4,8 +4,7 @@ const GNEWS_API_KEY = process.env.GNEWS_API_KEY!;
 const NEWS_API_KEY = process.env.NEWS_API_KEY!;
 
 export async function GET() {
-  const query =
-    'artificial intelligence OR openai OR anthropic OR deepmind OR ai OR chatgpt';
+  const query = `"artificial intelligence" OR "machine learning" OR "chatgpt" OR "openai" OR "deepmind" OR "anthropic" OR "llm" OR "language model" OR "transformer model" OR "generative ai" OR "ai startup" OR "ai research lab" OR "founder ai" OR "ai company" OR "ai tool"`;
 
   const fromDate = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000) // 14 days ago
     .toISOString()
@@ -57,7 +56,36 @@ export async function GET() {
       (a) => a.title && a.url
     );
 
-    const sortedArticles = mergedArticles.sort(
+    // ✅ AI-specific filtering
+    const AI_KEYWORDS = [
+      'artificial intelligence',
+      'ai startup',
+      'ai model',
+      'ai tool',
+      'ai research',
+      'machine learning',
+      'generative ai',
+      'language model',
+      'transformer model',
+      'llm',
+      'openai',
+      'anthropic',
+      'deepmind',
+      'chatgpt',
+      'ai regulation',
+      'ai company',
+      'founder ai',
+      'funding ai',
+      'ai acquisition',
+      'ai investment',
+    ];
+
+    const filteredArticles = mergedArticles.filter((article) => {
+      const text = `${article.title} ${article.description}`.toLowerCase();
+      return AI_KEYWORDS.some((keyword) => text.includes(keyword));
+    });
+
+    const sortedArticles = filteredArticles.sort(
       (a, b) =>
         new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
     );
