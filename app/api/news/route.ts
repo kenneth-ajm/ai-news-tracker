@@ -17,7 +17,7 @@ export async function GET() {
 
   const newsapiUrl = `https://newsapi.org/v2/everything?q=${encodeURIComponent(
     query
-  )}&language=en&pageSize=50&from=${fromDate}&apiKey=${NEWS_API_KEY}`;
+  )}&language=en&pageSize=50&from=${fromDate}&sortBy=publishedAt&apiKey=${NEWS_API_KEY}`;
 
   try {
     const [gnewsRes, newsapiRes] = await Promise.all([
@@ -33,7 +33,7 @@ export async function GET() {
         title: article.title,
         description: article.description,
         url: article.url,
-        image: article.image,
+        image: article.image || null,
         publishedAt: article.publishedAt,
         source: {
           name: new URL(article.source?.url || article.url)
@@ -46,16 +46,17 @@ export async function GET() {
         title: article.title,
         description: article.description,
         url: article.url,
-        image: article.urlToImage,
+        image: article.urlToImage || null,
         publishedAt: article.publishedAt,
         source: {
           name: article.source?.name || 'Unknown',
         },
       })) || [];
 
-    const mergedArticles = [...gnewsArticles, ...newsapiArticles];
+    const mergedArticles = [...gnewsArticles, ...newsapiArticles].filter(
+      (a) => a.title && a.url
+    );
 
-    // ✅ Sort articles by newest date first
     const sortedArticles = mergedArticles.sort(
       (a, b) =>
         new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()

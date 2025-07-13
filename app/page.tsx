@@ -42,7 +42,6 @@ const SOURCE_ICONS: Record<string, ReactNode> = {
   Github: <FaGithub className="inline-block text-white" />,
 };
 
-
 const CATEGORY_KEYWORDS: Record<string, string[]> = {
   'Latest AI product announcements': ['launch', 'product', 'release', 'introduce'],
   'Key company movements': ['CEO', 'leadership', 'hiring', 'resign', 'promotion', 'executive', 'sam altman', 'elon musk'],
@@ -95,10 +94,17 @@ export default function HomePage() {
             {items.slice(0, visibleCount).map((article) => (
               <div
                 key={article.url}
-                className="bg-white/10 backdrop-blur-md rounded-lg p-5 shadow-md border border-white/10 hover:bg-white/20 transition"
+                className="bg-white/10 backdrop-blur-md rounded-lg p-5 shadow-md border border-white/10 hover:bg-white/20 transition flex flex-col"
               >
+                {article.image && (
+                  <img
+                    src={article.image}
+                    alt={article.title}
+                    className="rounded mb-3 h-40 w-full object-cover"
+                  />
+                )}
                 <a href={article.url} target="_blank" rel="noopener noreferrer">
-                  <h3 className="text-lg font-semibold mb-1">{article.title}</h3>
+                  <h3 className="text-lg font-semibold mb-1 hover:underline">{article.title}</h3>
                 </a>
                 <p className="text-sm text-gray-300 mb-2">
                   {(SOURCE_ICONS[article.source.name] || <FaRegNewspaper className="inline-block" />)}{' '}
