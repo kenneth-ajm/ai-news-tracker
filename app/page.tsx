@@ -7,7 +7,6 @@ import {
   FaBuilding,
   FaMoneyBillWave,
   FaFlask,
-  FaBalanceScale,
   FaNewspaper,
 } from 'react-icons/fa';
 import {
@@ -62,12 +61,30 @@ function categorizeArticle(article: Article): string {
 
 export default function HomePage() {
   const [articles, setArticles] = useState<Article[]>([]);
-  const [visibleCount, setVisibleCount] = useState(12);
+  const [activeTab, setActiveTab] = useState<string>('Latest AI product announcements');
+  const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     fetch('/api/news')
       .then((res) => res.json())
-      .then((data) => setArticles(data.articles || []));
+      .then((data) => {
+        const fetchedArticles: Article[] = data.articles || [];
+        const newVisibleCounts: Record<string, number> = {};
+        const categorized: Record<string, Article[]> = {};
+
+        fetchedArticles.forEach((article) => {
+          const category = categorizeArticle(article);
+          if (!categorized[category]) categorized[category] = [];
+          categorized[category].push(article);
+        });
+
+        for (const category in categorized) {
+          newVisibleCounts[category] = 12;
+        }
+
+        setVisibleCounts(newVisibleCounts);
+        setArticles(fetchedArticles);
+      });
   }, []);
 
   const categorized: Record<string, Article[]> = {};
@@ -77,50 +94,73 @@ export default function HomePage() {
     categorized[category].push(article);
   });
 
-  const handleLoadMore = () => {
-    setVisibleCount((prev) => prev + 12);
+  const handleLoadMore = (category: string) => {
+    setVisibleCounts((prev) => ({
+      ...prev,
+      [category]: (prev[category] || 12) + 12,
+    }));
   };
 
+  const categories = Object.keys(categorized);
+
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-900 to-gray-800 text-white px-6 py-10 font-sans">
-      <h1 className="text-4xl font-extrabold mb-8 flex items-center gap-2">
+    <main className="min-h-screen bg-gradient-to-br from-slate-900 to-gray-800 text-white px-4 sm:px-6 py-10 font-sans">
+      <h1 className="text-3xl sm:text-4xl font-extrabold mb-8 flex items-center gap-2">
         🤖 Latest AI News
       </h1>
 
-      {Object.entries(categorized).map(([category, items]) => (
-        <div key={category} className="mb-10">
-          <h2 className="text-2xl font-bold mb-4">{category}</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {items.slice(0, visibleCount).map((article) => (
-              <div
-                key={article.url}
-                className="bg-white/10 backdrop-blur-md rounded-lg p-5 shadow-md border border-white/10 hover:bg-white/20 transition flex flex-col"
-              >
-                {article.image && (
-                  <img
-                    src={article.image}
-                    alt={article.title}
-                    className="rounded mb-3 h-40 w-full object-cover"
-                  />
-                )}
-                <a href={article.url} target="_blank" rel="noopener noreferrer">
-                  <h3 className="text-lg font-semibold mb-1 hover:underline">{article.title}</h3>
-                </a>
-                <p className="text-sm text-gray-300 mb-2">
-                  {(SOURCE_ICONS[article.source.name] || <FaRegNewspaper className="inline-block" />)}{' '}
-                  {article.source.name} — {new Date(article.publishedAt).toLocaleString()}
-                </p>
-                <p className="text-sm text-gray-400">{article.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
+      {/* Tabs */}
+      <div className="flex flex-wrap gap-3 mb-8">
+        {categories.map((category) => (
+          <button
+            key={category}
+            className={`px-4 py-2 rounded-full border text-sm ${
+              activeTab === category
+                ? 'bg-purple-600 border-purple-700 text-white'
+                : 'bg-white/10 border-white/20 text-gray-300 hover:bg-white/20'
+            } transition`}
+            onClick={() => setActiveTab(category)}
+          >
+            {category}
+          </button>
+        ))}
+      </div>
 
-      {visibleCount < articles.length && (
+      {/* Articles */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {categorized[activeTab]
+          ?.slice(0, visibleCounts[activeTab] || 12)
+          .map((article) => (
+            <div
+              key={article.url}
+              className="bg-white/10 backdrop-blur-md rounded-lg p-5 shadow-md border border-white/10 hover:bg-white/20 transition flex flex-col"
+            >
+              {article.image && (
+                <img
+                  src={article.image}
+                  alt={article.title}
+                  className="rounded mb-3 h-40 w-full object-cover"
+                />
+              )}
+              <a href={article.url} target="_blank" rel="noopener noreferrer">
+                <h3 className="text-lg font-semibold mb-1 hover:underline">
+                  {article.title}
+                </h3>
+              </a>
+              <p className="text-sm text-gray-300 mb-2">
+                {(SOURCE_ICONS[article.source.name] || <FaRegNewspaper className="inline-block" />)}{' '}
+                {article.source.name} — {new Date(article.publishedAt).toLocaleString()}
+              </p>
+              <p className="text-sm text-gray-400">{article.description}</p>
+            </div>
+          ))}
+      </div>
+
+      {/* Load More */}
+      {(categorized[activeTab]?.length || 0) > (visibleCounts[activeTab] || 12) && (
         <div className="flex justify-center mt-10">
           <button
-            onClick={handleLoadMore}
+            onClick={() => handleLoadMore(activeTab)}
             className="px-6 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition"
           >
             Load More
