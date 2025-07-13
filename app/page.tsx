@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 type Article = {
   title: string;
@@ -12,6 +12,39 @@ type Article = {
 };
 
 const filters = ['All', 'People', 'Funding', 'Product'];
+
+const HIGHLIGHTS: Record<string, string> = {
+  "Sam Altman": "🧑‍💼 Sam Altman",
+  "Dario Amodei": "🧑‍🔬 Dario Amodei",
+  "Demis Hassabis": "🧠 Demis Hassabis",
+  "Elon Musk": "🚀 Elon Musk",
+  "OpenAI": "🏢 OpenAI",
+  "Anthropic": "🌿 Anthropic",
+  "DeepMind": "🔬 DeepMind",
+  "Meta": "📘 Meta",
+  "Google": "🔍 Google",
+  "xAI": "🧩 xAI"
+};
+
+function highlightTerms(text: string): React.ReactNode {
+  const parts = text.split(
+    new RegExp(`(${Object.keys(HIGHLIGHTS).join('|')})`, 'gi')
+  );
+
+  return (
+    <>
+      {parts.map((part, i) =>
+        HIGHLIGHTS[part] ? (
+          <span key={i} className="font-bold text-indigo-600">
+            {HIGHLIGHTS[part]}
+          </span>
+        ) : (
+          part
+        )
+      )}
+    </>
+  );
+}
 
 export default function Home() {
   const [articles, setArticles] = useState<Article[]>([]);
@@ -32,9 +65,9 @@ export default function Home() {
       setFiltered(articles);
     } else {
       const keywordMap: Record<string, string[]> = {
-        People: ['joins', 'hires', 'steps down', 'chief', 'exec', 'leadership'],
+        People: ['joins', 'hires', 'steps down', 'chief', 'exec', 'leadership', 'sam altman', 'dario', 'demis', 'elon'],
         Funding: ['raises', 'funding', 'investment', 'valuation', 'series a', 'seed round'],
-        Product: ['launch', 'introduces', 'releases', 'model', 'GPT', 'tool'],
+        Product: ['launch', 'introduces', 'releases', 'model', 'GPT', 'tool', 'framework'],
       };
 
       const terms = keywordMap[selected] || [];
@@ -52,7 +85,7 @@ export default function Home() {
     <main className="p-8 max-w-5xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">🧠 Latest AI News</h1>
 
-      {/* Filter buttons */}
+      {/* Filter Buttons */}
       <div className="flex gap-4 mb-6">
         {filters.map((f) => (
           <button
@@ -73,12 +106,23 @@ export default function Home() {
           <p className="text-gray-500">No articles found for “{selected}”.</p>
         )}
         {filtered.map((article, index) => (
-          <a key={index} href={article.url} target="_blank" rel="noopener noreferrer" className="border p-4 rounded shadow hover:bg-gray-50 transition">
-            <h2 className="text-xl font-semibold">{article.title}</h2>
+          <a
+            key={index}
+            href={article.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="border p-4 rounded shadow hover:bg-gray-50 transition"
+          >
+            <h2 className="text-xl font-semibold">
+              {highlightTerms(article.title)}
+            </h2>
             <p className="text-sm text-gray-600">
-              {article.source.name} – {new Date(article.publishedAt).toLocaleString()}
+              {article.source.name} –{' '}
+              {new Date(article.publishedAt).toLocaleString()}
             </p>
-            <p className="mt-2 text-gray-800">{article.description}</p>
+            <p className="mt-2 text-gray-800">
+              {highlightTerms(article.description)}
+            </p>
           </a>
         ))}
       </div>
